@@ -151,33 +151,33 @@ Multi-Modal-RAG-Q&A empowers **students**, **teachers**, and **researchers** to 
 - Generate summaries, quizzes, and insights from course material  
 - Track AI performance through built-in analytics  
 
-////////////////////////////////////////////////////////////////////////////////////
+---
 
 ## 🧰 Installation & Setup
 
-### 1️⃣ Clone the Repository
-git clone https://github.com/YourUsername/Multi-Modal-RAG-Q&A.git
-cd NexusAI_Pro
+1️⃣ Clone the Repository
+    git clone https://github.com/YourUsername/Multi-Modal-RAG-Q&A.git
+    cd Multi-Modal-RAG-Q-A
 
-////////////////////////////////////////////////////////////////////////////////////
+--------
 
 2️⃣ Backend Setup
-
 cd backend
 python -m venv venv
+
 venv\Scripts\activate   # or source venv/bin/activate (Linux)
+
 pip install -r requirements.txt
 
------------------------------
+---
 
 ollama run llama3
 
------------------------------
+---
 
 python app.py
 
-
-////////////////////////////////////////////////////////////////////////////////////
+----------
 
 3️⃣ Frontend Setup
 
