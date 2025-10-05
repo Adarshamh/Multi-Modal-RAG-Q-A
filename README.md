@@ -19,32 +19,50 @@ The application integrates **LLMs (like LLaMA 3 via Ollama)**, **vector database
 The project is built on a **modular architecture** with a **separated frontend (Angular)** and **backend (Python FastAPI)**.
 
 
-Multi-Modal-RAG-Q&A/
-│
-├── backend/
-│ ├── app.py
-│ ├── gradio.py
-│ ├── requirements.txt
-│ ├── .env.example
-│ ├── data/
-│ │ ├── embeddings/
-│ │ └── cache/
-│ └── logs/
-│
-├── frontend/
-│ ├── src/
-│ │ ├── app/
-│ │ │ ├── components/
-│ │ │ ├── services/
-│ │ │ └── models/
-│ │ ├── assets/
-│ │ └── environments/
-│ ├── package.json
-│ ├── angular.json
-│ ├── tsconfig.json
-│ └── README.md
-│
-└── README.md
+    Multi-Modal-RAG-Q&A/
+    ├── backend/
+    │   ├── app.py
+    │   ├── llm_utils.py
+    │   ├── memory.py
+    │   ├── knowledge_base.py
+    │   ├── websocket.py
+    │   ├── requirements.txt
+    │   ├── uploaded_files/
+    │   └── .env
+    └── frontend/
+        ├── angular.json
+        ├── package.json
+        └── src/
+            ├── app/
+            │   ├── components/
+            │   │   ├── file-chat/
+            │   │   │   ├── file-chat.component.ts
+            │   │   │   ├── file-chat.component.html
+            │   │   │   └── file-chat.component.scss
+            │   │   ├── audio-chat/
+            │   │   │   ├── audio-chat.component.ts
+            │   │   │   ├── audio-chat.component.html
+            │   │   │   └── audio-chat.component.scss
+            │   │   ├── dashboard/
+            │   │   │   ├── dashboard.component.ts
+            │   │   │   ├── dashboard.component.html
+            │   │   │   └── dashboard.component.scss
+            │   │   ├── voice-input/
+            │   │   │   ├── voice-input.component.ts
+            │   │   │   ├── voice-input.component.html
+            │   │   │   └── voice-input.component.scss
+            │   │   └── summary-panel/
+            │   │       ├── summary-panel.component.ts
+            │   │       ├── summary-panel.component.html
+            │   │       └── summary-panel.component.scss
+            │   ├── services/
+            │   │   ├── api.service.ts
+            │   │   └── websocket.service.ts
+            │   ├── themes/
+            │   │   ├── gradient.scss
+            │   │   └── variables.scss
+            │   └── app.module.ts
+            └── assets/
 
 
 ---
