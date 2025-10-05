@@ -162,7 +162,9 @@ Multi-Modal-RAG-Q&A empowers **students**, **teachers**, and **researchers** to 
 --------
 
 2️⃣ Backend Setup
+
 cd backend
+
 python -m venv venv
 
 venv\Scripts\activate   # or source venv/bin/activate (Linux)

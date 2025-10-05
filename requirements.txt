@@ -1,7 +1,6 @@
 # Core
 fastapi
 uvicorn
-gradio
 
 # LLMs & RAG
 langchain
@@ -12,10 +11,7 @@ ollama
 
 # File Handling
 pytesseract
-Pillow
 PyPDF2
-pandas
-python-docx
 python-pptx
 
 # Audio Processing
@@ -23,10 +19,19 @@ openai-whisper
 pydub
 # Utils
 requests
-python-dotenv
 
 # Dashboard & Analytics
 plotly
 
 # Async / Performance
 aiofiles
+
+
+uvicorn[standard]
+pydantic
+python-dotenv
+python-docx
+pandas
+PyPDF2
+Pillow
+langdetect
