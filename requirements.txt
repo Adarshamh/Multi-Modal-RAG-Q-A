@@ -1,0 +1,32 @@
+# Core
+fastapi
+uvicorn
+gradio
+
+# LLMs & RAG
+langchain
+langchain-community
+faiss-cpu
+openai
+ollama
+
+# File Handling
+pytesseract
+Pillow
+PyPDF2
+pandas
+python-docx
+python-pptx
+
+# Audio Processing
+openai-whisper
+pydub
+# Utils
+requests
+python-dotenv
+
+# Dashboard & Analytics
+plotly
+
+# Async / Performance
+aiofiles
