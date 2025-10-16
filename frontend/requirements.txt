@@ -1,0 +1,7 @@
+streamlit>=1.25.0
+requests>=2.32.0
+pandas>=2.3.2
+plotly>=5.18.0
+sseclient-py>=1.8.0
+simplejson>=3.19.1
+pillow==11.1.0
