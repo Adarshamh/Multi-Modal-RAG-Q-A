@@ -1,28 +1,35 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File
 from fastapi.responses import JSONResponse
-from backend.core.text_extractor import extract_text_from_file
-from backend.core.model_selector import select_model
-from backend.core.logger import logger
-import ollama
-import os
+from ..core.text_extractor import extract_text_from_file
+from ..core.config import OLLAMA_HOST, OLLAMA_PORT, OLLAMA_TEXT_MODEL
+from ..core.logger import logger
+import requests, os
 
 router = APIRouter()
 
 @router.post("/auto-summarize")
 async def summarize_file(file: UploadFile = File(...)):
     try:
-        os.makedirs(os.path.join("data","uploads"), exist_ok=True)
-        tmp_path = os.path.join("data","uploads", file.filename)
+        contents = await file.read()
+        tmp_path = f"/tmp/{file.filename}"
         with open(tmp_path, "wb") as f:
-            f.write(await file.read())
+            f.write(contents)
         text = extract_text_from_file(tmp_path)
         if not text:
             return {"answer":"No content to summarize."}
         prompt = f"Summarize the following text in bullet points:\n\n{text[:4000]}"
-        model = select_model("text")
-        resp = ollama.chat(model=model, messages=[{"role":"user","content":prompt}])
-        ans = resp.get("text") if isinstance(resp, dict) and resp.get("text") else str(resp)
+        try:
+            payload = {"model": OLLAMA_TEXT_MODEL, "messages": [{"role":"user","content":prompt}]}
+            resp = requests.post(f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat", json=payload, timeout=60)
+            if resp.ok:
+                body = resp.json()
+                ans = body.get("response") or body.get("text") or (body.get("choices")[0]["message"]["content"] if body.get("choices") else str(body))
+            else:
+                ans = f"LLM error: {resp.status_code}"
+        except Exception as e:
+            logger.exception("summarize LLM error")
+            ans = f"LLM call failed: {e}"
         return {"answer": ans}
     except Exception as e:
-        logger.exception("summarize_file error")
+        logger.exception("summarize error")
         return JSONResponse(status_code=500, content={"error": str(e)})

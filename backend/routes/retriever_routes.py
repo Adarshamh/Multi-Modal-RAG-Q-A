@@ -1,14 +1,15 @@
-from fastapi import APIRouter, Query
-from backend.core.rag_engine import retrieve
-from backend.core.logger import logger
+from fastapi import APIRouter
+from ..core.rag_engine import retrieve
+from ..core.logger import logger
 
-router = APIRouter(prefix="/api/retriever", tags=["retriever"])
+router = APIRouter()
 
-@router.get("/query")
-def query_docs(q: str = Query(...)):
+@router.get("/retrieve")
+def retrieve_endpoint(q: str, k: int = 5):
     try:
-        results = retrieve(q)
-        return {"results": results}
+        docs = retrieve(q, k=k)
+        snippets = [{"text": d.page_content, "meta": d.metadata} for d in docs]
+        return {"results": snippets}
     except Exception as e:
-        logger.exception("retriever query failed")
+        logger.exception("retrieve endpoint error")
         return {"error": str(e)}

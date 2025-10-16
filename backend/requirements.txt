@@ -19,7 +19,5 @@ requests==2.32.5
 sseclient-py==1.8.0
 huggingface-hub==0.33.5
 python-multipart
-python-docx
-pandas
-sse-starlette
+simplejson
 pydantic==2.11.3

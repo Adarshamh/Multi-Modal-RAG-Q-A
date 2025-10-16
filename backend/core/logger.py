@@ -1,18 +1,21 @@
 import logging
-from logging.handlers import RotatingFileHandler
-from .config import LOG_PATH
+from .config import LOG_PATH, LOG_DIR
+import os
 
+# Ensure log dir
+os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+
+logging.basicConfig(
+    filename=LOG_PATH,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s:%(message)s"
+)
 logger = logging.getLogger("mm_rag")
-logger.setLevel(logging.INFO)
-
+# also stream to console for dev
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s %(levelname)s:%(message)s")
+console.setFormatter(formatter)
 if not logger.handlers:
-    ch = logging.StreamHandler()
-    ch.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
-    logger.addHandler(ch)
-    try:
-        fh = RotatingFileHandler(LOG_PATH, maxBytes=5*1024*1024, backupCount=3, encoding="utf-8")
-        fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
-        logger.addHandler(fh)
-    except Exception:
-        logger.warning("Could not create file log handler; continuing with console logging.")
-        
+    logger.addHandler(console)
+logger.info("Logger initialized, logs will be saved to %s", LOG_PATH)

@@ -1,146 +1,146 @@
 import streamlit as st
 import requests
+import os
 import json
 import time
-import os
-from sseclient import SSEClient
+from io import BytesIO
 
-# ----------------------------
-# Backend configuration
-# ----------------------------
+st.set_page_config(page_title="Multi-Modal RAG Q&A", layout="wide")
+
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+API_PREFIX = f"{BACKEND_URL}/api"
 
-st.set_page_config(page_title="🤖 Multi-Modal RAG Assistant", layout="wide")
 st.title("🤖 Multi-Modal RAG Assistant")
-st.caption("Ask questions from your documents, images, or videos using local AI (Ollama)")
+st.caption("Ask questions from your documents, images, audio or URLs (Local Ollama)")
 
-# ----------------------------
-# Session state
-# ----------------------------
+# session
 if "session_id" not in st.session_state:
     import uuid
     st.session_state.session_id = str(uuid.uuid4())
-
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# ----------------------------
-# Tabs: Chat and OCR
-# ----------------------------
-tab_chat, tab_ocr = st.tabs(["💬 Ask Question / File Chat", "🖼️ Extract Text from Image"])
+col1, col2 = st.columns([2,1])
 
-# ----------------------------
-# Chat / Knowledge Base tab
-# ----------------------------
-with tab_chat:
-    st.subheader("Ask a Question or Add Document to Knowledge Base")
+with col1:
+    st.subheader("💬 Ask Question / File Chat")
+    uploaded = st.file_uploader("Upload a document (optional) — if provided question is about this file", type=["pdf","docx","txt","png","jpg","jpeg","mp4","wav","csv"])
+    question = st.text_area("Enter your question", height=140, placeholder="e.g., Summarize the uploaded document or answer questions about it.")
+    ask = st.button("Ask")
 
-    # File upload (optional)
-    uploaded_file = st.file_uploader(
-        "Upload a document or media (optional). Any question entered will be about this file if uploaded.",
-        type=["pdf", "docx", "txt", "png", "jpg", "jpeg", "mp4", "wav", "csv"],
-        key="file_upload"
-    )
-
-    # Add to Knowledge Base button
-    if uploaded_file and st.button("📤 Add to Knowledge Base"):
-        with st.spinner(f"Uploading {uploaded_file.name} to Knowledge Base..."):
-            files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
+    if ask:
+        if uploaded:
+            # send to file-chat endpoint with file
+            files = {"file": (uploaded.name, uploaded.getvalue())}
+            data = {"question": question or "Give a brief summary", "template": "qa", "session_id": st.session_state.session_id}
             try:
-                resp = requests.post(f"{BACKEND_URL}/add-to-kb", files=files, timeout=120)
+                with st.spinner("Uploading file & asking..."):
+                    resp = requests.post(f"{API_PREFIX}/file-chat", files=files, data=data, timeout=300)
                 if resp.ok:
-                    st.success(f"✅ {uploaded_file.name} added to Knowledge Base")
+                    try:
+                        out = resp.json()
+                        st.success("Answer")
+                        st.write(out.get("answer", out))
+                        st.session_state.history.append({"user": question, "assistant": out.get("answer", ""), "ts": time.time()})
+                    except Exception:
+                        st.error("Invalid JSON response")
                 else:
-                    st.error(f"❌ Upload failed: {resp.text}")
+                    st.error(f"Backend error: {resp.status_code} {resp.text}")
             except requests.exceptions.RequestException as e:
-                st.error(f"❌ Upload failed: {str(e)}")
-
-    # User question input
-    question = st.text_area("Enter your question here", placeholder="e.g., Summarize the uploaded document or ask any question")
-
-    # Ask button
-    if st.button("🚀 Ask") and question.strip():
-        with st.spinner("Generating answer..."):
-            st.markdown("### 🧩 Answer")
-            answer_box = st.empty()
-            full_answer = ""
-
+                st.error(f"Connection error: {e}")
+        else:
+            # stream via chat-stream
             try:
-                # Decide endpoint based on file upload
-                if uploaded_file:
-                    # File chat
-                    files = {"file": (uploaded_file.name, uploaded_file.getvalue())}
-                    data = {"question": question, "template": "qa", "session_id": st.session_state.session_id}
-                    resp = requests.post(f"{BACKEND_URL}/file-chat", files=files, data=data, timeout=300)
-                    if resp.ok:
-                        full_answer = resp.json().get("answer", "")
-                    else:
-                        st.error(f"❌ File chat failed: {resp.text}")
-                        full_answer = ""
-                else:
-                    # General question (streamed)
-                    with requests.post(
-                        f"{BACKEND_URL}/chat-stream",
-                        json={"question": question},
-                        stream=True,
-                        timeout=800,
-                    ) as r:
-                        if not r.ok:
-                            st.error(f"Backend returned {r.status_code}: {r.text}")
+                with st.spinner("Contacting model..."):
+                    # connect to SSE endpoint
+                    url = f"{API_PREFIX}/chat-stream"
+                    # use requests streaming
+                    with requests.post(url, json={"question": question}, stream=True, timeout=300) as r:
+                        if r.status_code != 200:
+                            st.error(f"Streaming endpoint returned {r.status_code}: {r.text}")
                         else:
-                            client = SSEClient(r)
-                            for event in client.events():
-                                if not event.data:
+                            full = ""
+                            answer_box = st.empty()
+                            for line in r.iter_lines(decode_unicode=True):
+                                if not line:
                                     continue
-                                if event.data == "[DONE]":
-                                    break
-                                try:
-                                    data = json.loads(event.data)
-                                    token = data.get("token", "")
-                                except:
-                                    token = event.data
-                                full_answer += token
-                                answer_box.markdown(full_answer)
-
-                # Save history
-                if full_answer:
-                    st.session_state.history.append({"user": question, "assistant": full_answer, "ts": time.time()})
-
+                                decoded = line.strip()
+                                if decoded.startswith("data:"):
+                                    payload = decoded.replace("data:", "").strip()
+                                    if payload == "[DONE]":
+                                        break
+                                    try:
+                                        d = json.loads(payload)
+                                        token = d.get("token") or d.get("text") or ""
+                                    except Exception:
+                                        token = payload
+                                    full += token
+                                    answer_box.markdown(f"**Assistant:** {full}")
+                            st.session_state.history.append({"user": question, "assistant": full, "ts": time.time()})
             except requests.exceptions.RequestException as e:
-                st.error(f"❌ Connection error: {str(e)}")
+                st.error(f"Connection error: {e}")
 
-    # Conversation history
-    st.markdown("---")
-    st.subheader("Conversation History")
-    if st.session_state.history:
-        for m in reversed(st.session_state.history):
-            st.markdown(f"**You:** {m['user']}")
-            st.markdown(f"**Assistant:** {m['assistant']}")
-            st.write("---")
-    else:
-        st.info("No conversation yet.")
+with col2:
+    st.subheader("Tools")
+    st.markdown("### Knowledge Base")
+    file_kb = st.file_uploader("Upload to KB", key="kb_uploader", type=["pdf","docx","txt","csv"])
+    if file_kb and st.button("Add to KB"):
+        files = {"file": (file_kb.name, file_kb.getvalue())}
+        try:
+            with st.spinner("Uploading to KB..."):
+                resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files, timeout=300)
+            if resp.ok:
+                st.success("Uploaded to KB")
+                st.write(resp.json())
+            else:
+                try:
+                    st.error(resp.json())
+                except:
+                    st.error(resp.text)
+        except requests.exceptions.RequestException as e:
+            st.error(f"Upload failed: {e}")
 
-# ----------------------------
-# OCR Tab
-# ----------------------------
-with tab_ocr:
-    st.subheader("Extract Text from Image")
-    image_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"], key="ocr_file")
-    if image_file and st.button("📖 Extract Text"):
-        with st.spinner("Extracting text using OCR..."):
-            try:
-                files = {"file": (image_file.name, image_file.getvalue())}
-                resp = requests.post(f"{BACKEND_URL}/extract-text", files=files, timeout=120)
-                if resp.ok:
-                    text = resp.json().get("text", "")
-                    st.text_area("Extracted Text", text, height=300)
-                else:
-                    st.error(f"❌ OCR failed: {resp.text}")
-            except requests.exceptions.RequestException as e:
-                st.error(f"❌ OCR failed: {str(e)}")
+    st.markdown("### Image OCR")
+    img = st.file_uploader("OCR Image", type=["png","jpg","jpeg"], key="ocr")
+    if img and st.button("Extract Text"):
+        files = {"file": (img.name, img.getvalue())}
+        try:
+            with st.spinner("Extracting..."):
+                resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files, timeout=120)
+            if resp.ok:
+                st.success("Extracted")
+                try:
+                    data = resp.json()
+                    st.text_area("OCR Result", data.get("answer", ""), height=250)
+                except Exception:
+                    st.text_area("OCR Result", resp.text, height=250)
+            else:
+                st.error(f"OCR endpoint error: {resp.status_code} {resp.text}")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Connection error: {e}")
 
-# ----------------------------
-# Footer
-# ----------------------------
+    st.markdown("### Audio → Text")
+    aud = st.file_uploader("Audio file", type=["wav","mp3","m4a"], key="audio")
+    if aud and st.button("Transcribe Audio"):
+        files = {"file": (aud.name, aud.getvalue())}
+        try:
+            with st.spinner("Transcribing..."):
+                resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files, timeout=300)
+            if resp.ok:
+                st.success("Transcribed")
+                data = resp.json()
+                st.text_area("Transcript", data.get("answer", ""), height=250)
+            else:
+                st.error(f"Transcribe error: {resp.status_code} {resp.text}")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Connection error: {e}")
+
 st.markdown("---")
-st.caption("Powered by 🧠 Multi-Modal RAG • Local AI • Streamlit Frontend")
+st.subheader("Conversation History")
+if st.session_state.history:
+    for m in reversed(st.session_state.history):
+        st.markdown(f"**You:** {m['user']}")
+        st.markdown(f"**Assistant:** {m['assistant']}")
+        st.write("---")
+else:
+    st.info("No conversation yet.")
