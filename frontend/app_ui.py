@@ -35,7 +35,7 @@ with col1:
             data = {"question": question or "Give a brief summary", "template": "qa", "session_id": st.session_state.session_id}
             try:
                 with st.spinner("Uploading file & asking..."):
-                    resp = requests.post(f"{API_PREFIX}/file-chat", files=files, data=data, timeout=300)
+                    resp = requests.post(f"{API_PREFIX}/file-chat", files=files, data=data, timeout=2000)
                 if resp.ok:
                     try:
                         out = resp.json()
@@ -55,7 +55,7 @@ with col1:
                     # connect to SSE endpoint
                     url = f"{API_PREFIX}/chat-stream"
                     # use requests streaming
-                    with requests.post(url, json={"question": question}, stream=True, timeout=300) as r:
+                    with requests.post(url, json={"question": question}, stream=True, timeout=2000) as r:
                         if r.status_code != 200:
                             st.error(f"Streaming endpoint returned {r.status_code}: {r.text}")
                         else:
@@ -88,7 +88,7 @@ with col2:
         files = {"file": (file_kb.name, file_kb.getvalue())}
         try:
             with st.spinner("Uploading to KB..."):
-                resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files, timeout=300)
+                resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files, timeout=2000)
             if resp.ok:
                 st.success("Uploaded to KB")
                 st.write(resp.json())
@@ -106,7 +106,7 @@ with col2:
         files = {"file": (img.name, img.getvalue())}
         try:
             with st.spinner("Extracting..."):
-                resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files, timeout=120)
+                resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files, timeout=2000)
             if resp.ok:
                 st.success("Extracted")
                 try:
@@ -125,7 +125,7 @@ with col2:
         files = {"file": (aud.name, aud.getvalue())}
         try:
             with st.spinner("Transcribing..."):
-                resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files, timeout=300)
+                resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files, timeout=2000)
             if resp.ok:
                 st.success("Transcribed")
                 data = resp.json()
