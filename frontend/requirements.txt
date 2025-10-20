@@ -5,3 +5,4 @@ plotly>=5.18.0
 sseclient-py>=1.8.0
 simplejson>=3.19.1
 pillow==11.1.0
+streamlit-mic-recorder
