@@ -1,0 +1,65 @@
+2025-10-20 18:50:14,533 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 18:51:07,018 INFO:faiss.loader:Loading faiss with AVX2 support.
+2025-10-20 18:51:07,337 INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+2025-10-20 18:51:11,024 INFO:mm_rag:Loaded Whisper model: Whisper(
+  (encoder): AudioEncoder(
+    (conv1): Conv1d(80, 768, kernel_size=(3,), stride=(1,), padding=(1,))
+    (conv2): Conv1d(768, 768, kernel_size=(3,), stride=(2,), padding=(1,))
+    (blocks): ModuleList(
+      (0-11): 12 x ResidualAttentionBlock(
+        (attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (mlp): Sequential(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate='none')
+          (2): Linear(in_features=3072, out_features=768, bias=True)
+        )
+        (mlp_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (ln_post): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+  )
+  (decoder): TextDecoder(
+    (token_embedding): Embedding(51865, 768)
+    (blocks): ModuleList(
+      (0-11): 12 x ResidualAttentionBlock(
+        (attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (cross_attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (cross_attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (mlp): Sequential(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate='none')
+          (2): Linear(in_features=3072, out_features=768, bias=True)
+        )
+        (mlp_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+  )
+)
+2025-10-20 18:51:11,160 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 19:03:35,890 INFO:mm_rag:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 19:03:35,924 INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cpu
+2025-10-20 19:03:35,924 INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 19:03:45,407 INFO:mm_rag:Loaded persisted FAISS index from C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\embed_index.faiss
+2025-10-20 19:03:45,417 INFO:mm_rag:Loaded chunk_store with 30 entries
+2025-10-20 19:03:45,763 INFO:mm_rag:Saved chunk_store (37 chunks) to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\chunk_store.pkl
+2025-10-20 19:03:45,764 INFO:mm_rag:Saved FAISS index to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\embed_index.faiss
+2025-10-20 19:03:45,764 INFO:mm_rag:Added 7 chunks to index
+2025-10-20 19:03:45,764 INFO:mm_rag:Added 7 chunks to index for 1760080369965.pdf
