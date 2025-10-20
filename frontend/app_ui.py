@@ -24,7 +24,7 @@ col1, col2 = st.columns([2,1])
 
 with col1:
     st.subheader("💬 Ask Question / File Chat")
-    uploaded = st.file_uploader("Upload a document (optional)", type=["pdf","docx","txt","png","jpg","jpeg","mp4","wav","csv"])
+    uploaded = st.file_uploader("Upload a document (optional)", type=["pdf","docx","txt","csv"])
     question = st.text_area("Enter your question", height=140, placeholder="e.g., Summarize the uploaded document or answer questions about it.")
     ask = st.button("Ask")
 
