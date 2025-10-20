@@ -1,17 +1,11 @@
-import os
-from .config import OLLAMA_TEXT_MODEL, OLLAMA_VISION_MODEL, OLLAMA_LLAVA_MODEL
-from .logger import logger
+from .config import OLLAMA_TEXT_MODEL, OLLAMA_VISION_MODEL, OLLAMA_EMBED_MODEL
 
-def select_model(mode: str = "text"):
+def select_model(modality="text"):
     """
-    mode: 'text'|'vision'|'llava'
+    Simple model selector. Returns model name string configured in .env
     """
-    mode = mode.lower()
-    if mode == "vision":
-        logger.info(f"Selecting vision model: {OLLAMA_VISION_MODEL}")
+    if modality == "vision":
         return OLLAMA_VISION_MODEL
-    if mode == "llava":
-        logger.info(f"Selecting llava model: {OLLAMA_LLAVA_MODEL}")
-        return OLLAMA_LLAVA_MODEL
-    logger.info(f"Selecting text model: {OLLAMA_TEXT_MODEL}")
+    if modality == "embed":
+        return OLLAMA_EMBED_MODEL
     return OLLAMA_TEXT_MODEL

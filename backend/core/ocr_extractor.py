@@ -1,20 +1,17 @@
-from fastapi import UploadFile
-from io import BytesIO
 from PIL import Image
 import pytesseract
-from backend.core.logger import logger
+from .logger import logger
+from .config import TESSERACT_CMD
 
-def extract_text_from_image_upload(file: UploadFile) -> str:
+# Optionally set tesseract path if provided
+if TESSERACT_CMD:
+    pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
+
+def extract_text_from_image_bytes(image_bytes) -> str:
     try:
-        logger.info("OCR: processing file %s", file.filename)
-        data = file.file.read()
-        img = Image.open(BytesIO(data))
+        img = Image.open(image_bytes)
         text = pytesseract.image_to_string(img)
-        txt = text.strip()
-        if not txt:
-            logger.info("OCR: no text found in %s", file.filename)
-            return ""
-        return txt
+        return text
     except Exception as e:
-        logger.exception("OCR failed: %s", e)
+        logger.exception("OCR extraction failed")
         return ""

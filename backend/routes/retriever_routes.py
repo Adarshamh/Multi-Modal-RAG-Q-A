@@ -4,12 +4,11 @@ from ..core.logger import logger
 
 router = APIRouter()
 
-@router.get("/retrieve")
-def retrieve_endpoint(q: str, k: int = 5):
+@router.get("/search")
+def search(q: str, k: int = 5):
     try:
-        docs = retrieve(q, k=k)
-        snippets = [{"text": d.page_content, "meta": d.metadata} for d in docs]
-        return {"results": snippets}
+        results = retrieve(q, k=k)
+        return {"ok": True, "results": results}
     except Exception as e:
-        logger.exception("retrieve endpoint error")
-        return {"error": str(e)}
+        logger.exception("retriever search error")
+        return {"ok": False, "error": str(e)}

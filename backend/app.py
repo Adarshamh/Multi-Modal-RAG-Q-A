@@ -1,13 +1,13 @@
 import os
 import logging
 import sqlite3
-from fastapi import FastAPI, Response
-from fastapi.middleware.cors import CORSMiddleware
 import json
 import datetime
+from fastapi import FastAPI, Response
+from fastapi.middleware.cors import CORSMiddleware
 
-# Import routers using relative imports
-from .routes import (
+# Import routers
+from backend.routes import (
     file_chat,
     url_chat,
     ocr_image,
@@ -19,20 +19,23 @@ from .routes import (
     inference_routes,
 )
 
-from .core.config import LOG_PATH, DB_PATH
+# Import configuration
+from backend.core.config import LOG_DIR, DB_PATH, LOG_FILE
+from backend.core.logger import logger
 
-# prepare logger and directories
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
-logging.basicConfig(
-    filename=LOG_PATH,
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s:%(message)s"
-)
-
-# initialize simple sqlite DB for analytics & sessions (idempotent)
+# --------------------------------------------------------------------
+# Directory setup
+# --------------------------------------------------------------------
+os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+
+# --------------------------------------------------------------------
+# SQLite database initialization (for analytics & sessions)
+# --------------------------------------------------------------------
 conn = sqlite3.connect(DB_PATH)
 c = conn.cursor()
+
+# Analytics table
 c.execute("""
 CREATE TABLE IF NOT EXISTS analytics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +48,8 @@ CREATE TABLE IF NOT EXISTS analytics (
     created_at TEXT
 )
 """)
+
+# Sessions table
 c.execute("""
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
@@ -52,20 +57,42 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TEXT
 )
 """)
+
 conn.commit()
 conn.close()
 
-app = FastAPI(title="Multi-Modal-RAG-Q-A Backend (Ollama offline/online)")
+# --------------------------------------------------------------------
+# Logging configuration
+# --------------------------------------------------------------------
+logging.basicConfig(
+    filename=LOG_FILE,
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 
+logger.info("Logger initialized, logs will be saved to %s", LOG_FILE)
+
+# --------------------------------------------------------------------
+# FastAPI initialization
+# --------------------------------------------------------------------
+app = FastAPI(
+    title="Multi-Modal-RAG-Q-A Backend (Ollama offline/online)",
+    version="1.0.0",
+    description="Handles multimodal (text, audio, image, URL) inputs and RAG responses using Ollama + FAISS."
+)
+
+# Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Or restrict to frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# include routers under /api
+# --------------------------------------------------------------------
+# Register routes
+# --------------------------------------------------------------------
 app.include_router(file_chat.router, prefix="/api")
 app.include_router(url_chat.router, prefix="/api")
 app.include_router(ocr_image.router, prefix="/api")
@@ -76,40 +103,49 @@ app.include_router(chat_stream.router, prefix="/api")
 app.include_router(retriever_routes.router, prefix="/api")
 app.include_router(inference_routes.router, prefix="/api")
 
+# --------------------------------------------------------------------
+# Health check endpoint
+# --------------------------------------------------------------------
 @app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    """Simple health check endpoint."""
+    return {"status": "ok", "message": "Backend active and healthy"}
 
+# --------------------------------------------------------------------
+# Analytics endpoints
+# --------------------------------------------------------------------
 @app.post("/api/analytics/log")
 def log_entry(payload: dict):
+    """Log user interaction and model response."""
     try:
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
-        c.execute(
-            "INSERT INTO analytics (session_id,user_id,message,response,latency,tokens,created_at) VALUES (?,?,?,?,?,?,?)",
-            (
-                payload.get("session_id"),
-                payload.get("user_id"),
-                payload.get("message"),
-                payload.get("response"),
-                payload.get("latency"),
-                payload.get("tokens"),
-                datetime.datetime.utcnow().isoformat()
-            )
-        )
+        c.execute("""
+            INSERT INTO analytics (session_id, user_id, message, response, latency, tokens, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            payload.get("session_id"),
+            payload.get("user_id"),
+            payload.get("message"),
+            payload.get("response"),
+            payload.get("latency"),
+            payload.get("tokens"),
+            datetime.datetime.utcnow().isoformat()
+        ))
         conn.commit()
         conn.close()
         return {"ok": True}
     except Exception as e:
-        logging.exception("analytics log error")
+        logger.exception("Analytics log error")
         return Response(
             content=json.dumps({"ok": False, "error": str(e)}),
             media_type="application/json",
-            status_code=500
+            status_code=500,
         )
 
 @app.get("/api/analytics/stats")
 def stats():
+    """Return aggregated analytics stats."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute("SELECT COUNT(*), AVG(latency) FROM analytics")
@@ -121,15 +157,25 @@ def stats():
 
 @app.get("/api/analytics/timeline")
 def timeline(limit: int = 50):
+    """Return recent analytics timeline."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    c.execute(
-        "SELECT created_at, user_id, message, latency, tokens FROM analytics ORDER BY created_at DESC LIMIT ?",
-        (limit,)
-    )
+    c.execute("""
+        SELECT created_at, user_id, message, latency, tokens
+        FROM analytics
+        ORDER BY created_at DESC
+        LIMIT ?
+    """, (limit,))
     rows = c.fetchall()
     conn.close()
     timeline = [
-        {"timestamp": r[0], "user_id": r[1], "message": r[2], "latency": r[3], "tokens": r[4]} for r in rows
+        {
+            "timestamp": r[0],
+            "user_id": r[1],
+            "message": r[2],
+            "latency": r[3],
+            "tokens": r[4],
+        }
+        for r in rows
     ]
     return {"timeline": timeline}

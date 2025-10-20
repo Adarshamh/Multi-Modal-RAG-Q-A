@@ -1,21 +1,19 @@
 import logging
-from .config import LOG_PATH, LOG_DIR
 import os
+from .config import BASE_DIR
 
-# Ensure log dir
-os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+LOG_DIR = os.path.join(BASE_DIR, "..", "logs")
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_PATH = os.path.join(LOG_DIR, "app.log")
 
 logging.basicConfig(
-    filename=LOG_PATH,
     level=logging.INFO,
-    format="%(asctime)s %(levelname)s:%(message)s"
+    format="%(asctime)s %(levelname)s:%(name)s:%(message)s",
+    handlers=[
+        logging.FileHandler(LOG_PATH),
+        logging.StreamHandler()
+    ]
 )
+
 logger = logging.getLogger("mm_rag")
-# also stream to console for dev
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-formatter = logging.Formatter("%(asctime)s %(levelname)s:%(message)s")
-console.setFormatter(formatter)
-if not logger.handlers:
-    logger.addHandler(console)
 logger.info("Logger initialized, logs will be saved to %s", LOG_PATH)

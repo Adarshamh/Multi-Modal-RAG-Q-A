@@ -1,31 +1,28 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
-from ..core.model_selector import select_model
-from ..core.config import OLLAMA_HOST, OLLAMA_PORT
+from fastapi import APIRouter, Form
+from fastapi.responses import JSONResponse
 from ..core.logger import logger
-import requests, json
+from ..core.config import OLLAMA_HOST, OLLAMA_PORT, OLLAMA_TEXT_MODEL
+import requests
 
 router = APIRouter()
 
-class InferRequest(BaseModel):
-    input_type: str  # text/file/url
-    prompt: str
-
 @router.post("/infer")
-def infer(req: InferRequest):
+def infer(input_type: str = Form(...), prompt: str = Form(...)):
+    """
+    Simple non-streamed inference endpoint.
+    """
     try:
-        model = select_model("text")
-        payload = {"model": model, "messages": [{"role":"user","content": req.prompt}]}
-        r = requests.post(f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat", json=payload, timeout=60)
+        payload = {"model": OLLAMA_TEXT_MODEL, "messages": [{"role":"user","content": prompt}]}
+        r = requests.post(f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat", json=payload, timeout=120)
         if r.ok:
             try:
                 body = r.json()
+                answer = body.get("response") or body.get("text") or (body.get("choices")[0]["message"]["content"] if body.get("choices") else r.text)
             except Exception:
-                body = {"text": r.text}
-            answer = body.get("response") or body.get("text") or (body.get("choices")[0]["message"]["content"] if body.get("choices") else str(body))
-            return {"answer": answer}
+                answer = r.text
+            return {"ok": True, "answer": answer}
         else:
-            return {"error": f"LLM error: {r.status_code}"}
+            return JSONResponse(status_code=500, content={"ok": False, "error": f"LLM error {r.status_code}"})
     except Exception as e:
         logger.exception("infer error")
-        return {"error": str(e)}
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(e)})

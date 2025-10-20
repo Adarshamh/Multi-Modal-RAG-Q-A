@@ -2,17 +2,14 @@ import os
 import json
 import requests
 from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import JSONResponse, StreamingResponse
-from ..core.config import (
-    UPLOAD_DIR, MAX_FILE_SIZE_MB, ALLOWED_EXTENSIONS,
-    OLLAMA_HOST, OLLAMA_PORT, OLLAMA_TEXT_MODEL
-)
+from fastapi.responses import StreamingResponse, JSONResponse
+from ..core.config import UPLOAD_DIR, MAX_FILE_SIZE_MB, ALLOWED_EXTENSIONS, OLLAMA_HOST, OLLAMA_PORT, OLLAMA_TEXT_MODEL
 from ..core.text_extractor import extract_text_from_file
 from ..core.rag_engine import add_document_to_index, retrieve
 from ..core.logger import logger
+from ..core.model_selector import select_model
 
 router = APIRouter()
-
 
 def validate_file(fname: str):
     ext = os.path.splitext(fname)[1].lower()
@@ -26,8 +23,11 @@ async def chat_with_file(
     template: str = Form("qa"),
     session_id: str = Form(None)
 ):
+    """
+    Upload a file, add to index, query RAG and stream a response via Ollama.
+    Streams SSE events as JSON objects so the frontend can accumulate them.
+    """
     try:
-        # ---- 1. Validate file ----
         if not validate_file(file.filename):
             return JSONResponse(status_code=400, content={"error": "Unsupported file type."})
 
@@ -35,77 +35,68 @@ async def chat_with_file(
         if len(contents) > MAX_FILE_SIZE_MB * 1024 * 1024:
             return JSONResponse(status_code=400, content={"error": "File too large."})
 
-        # ---- 2. Save uploaded file ----
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         file_path = os.path.join(UPLOAD_DIR, file.filename)
         with open(file_path, "wb") as f:
             f.write(contents)
 
-        # ---- 3. Extract text ----
+        # Text extraction
         text = extract_text_from_file(file_path)
         if not text:
-            return JSONResponse(status_code=400, content={"error": "⚠️ Could not extract text from file."})
+            return JSONResponse(status_code=200, content={"answer": "⚠️ Could not extract text from file."})
 
-        # ---- 4. Add to RAG index ----
+        # Add to RAG index
         add_document_to_index(file.filename, text)
 
-        # ---- 5. Retrieve context ----
+        # Retrieve best chunks for context
         docs = retrieve(question, k=3)
-        context = "\n\n".join([d.page_content for d in docs]) if docs else text[:3000]
+        context = "\n\n".join(
+            [d.get("text", d.get("page_content", "")) for d in docs]
+        ) if docs else text[:3000]
 
-        prompt = (
-            f"Use the context below to answer accurately.\n\n"
-            f"CONTEXT:\n{context}\n\n"
-            f"QUESTION: {question}"
-        )
+        # Build the final prompt
+        prompt = f"Use the context below to answer the question.\n\nCONTEXT:\n{context}\n\nQUESTION: {question}"
 
-        payload = {
-            "model": OLLAMA_TEXT_MODEL,
-            "stream": True,
-            "messages": [{"role": "user", "content": prompt}],
-        }
-
+        model = select_model("text") or OLLAMA_TEXT_MODEL
+        payload = {"model": model, "stream": True, "messages": [{"role": "user", "content": prompt}]}
         ollama_url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat"
 
-        # ---- 6. Stream safely ----
         def ollama_stream():
             try:
                 with requests.post(ollama_url, json=payload, stream=True, timeout=300) as r:
                     r.raise_for_status()
-                    buffer = ""
 
-                    for raw_line in r.iter_lines():
-                        if not raw_line:
+                    for raw in r.iter_lines():
+                        if not raw:
                             continue
 
-                        line = raw_line.decode("utf-8", errors="ignore").strip()
+                        # Handle bytes or string safely
+                        line = raw.decode("utf-8", errors="ignore") if isinstance(raw, bytes) else raw.strip()
                         if not line:
                             continue
 
-                        # Remove "data: " prefix if present
-                        if line.startswith("data: "):
-                            line = line[6:].strip()
+                        if line.startswith("data:"):
+                            payload_text = line[len("data:"):].strip()
+                        else:
+                            payload_text = line
 
-                        # Stop signal
-                        if line.lower() in ("[done]", "[done]."):
-                            yield "data: [DONE]\n\n"
+                        if payload_text == "[DONE]":
                             break
 
-                        # ---- Handle possible malformed fragments ----
-                        buffer += line
                         try:
-                            event = json.loads(buffer)
-                            content = event.get("message", {}).get("content", "")
-                            if content:
-                                yield f"data: {content}\n\n"
-                            buffer = ""  # reset buffer after success
-                        except json.JSONDecodeError:
-                            # incomplete JSON fragment, keep buffering
-                            continue
+                            ev = json.loads(payload_text)
+                            token = ev.get("message", {}).get("content") or ev.get("response") or ev.get("text") or payload_text
+                        except Exception:
+                            token = payload_text
+
+                        yield f"data: {json.dumps({'content': token}, ensure_ascii=False)}\n\n"
+
+                # End of stream
+                yield f"data: {json.dumps({'content': ''})}\n\n"
 
             except Exception as e:
                 logger.exception("Streaming error from Ollama")
-                yield f"data: [ERROR] {str(e)}\n\n"
+                yield f"data: {json.dumps({'content': f'[ERROR] {str(e)}'})}\n\n"
 
         return StreamingResponse(ollama_stream(), media_type="text/event-stream")
 

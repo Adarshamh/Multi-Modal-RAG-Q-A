@@ -24,38 +24,48 @@ col1, col2 = st.columns([2,1])
 
 with col1:
     st.subheader("💬 Ask Question / File Chat")
-    uploaded = st.file_uploader("Upload a document (optional) — if provided question is about this file", type=["pdf","docx","txt","png","jpg","jpeg","mp4","wav","csv"])
+    uploaded = st.file_uploader("Upload a document (optional)", type=["pdf","docx","txt","png","jpg","jpeg","mp4","wav","csv"])
     question = st.text_area("Enter your question", height=140, placeholder="e.g., Summarize the uploaded document or answer questions about it.")
     ask = st.button("Ask")
 
     if ask:
         if uploaded:
-            # send to file-chat endpoint with file
             files = {"file": (uploaded.name, uploaded.getvalue())}
             data = {"question": question or "Give a brief summary", "template": "qa", "session_id": st.session_state.session_id}
             try:
                 with st.spinner("Uploading file & asking..."):
-                    resp = requests.post(f"{API_PREFIX}/file-chat", files=files, data=data, timeout=2000)
-                if resp.ok:
-                    try:
-                        out = resp.json()
-                        st.success("Answer")
-                        st.write(out.get("answer", out))
-                        st.session_state.history.append({"user": question, "assistant": out.get("answer", ""), "ts": time.time()})
-                    except Exception:
-                        st.error("Invalid JSON response")
+                    # Use stream=True to receive SSE from backend
+                    resp = requests.post(f"{API_PREFIX}/file-chat", files=files, data=data, stream=True, timeout=300)
+                if resp.status_code == 200:
+                    full = ""
+                    answer_box = st.empty()
+                    for line in resp.iter_lines(decode_unicode=True):
+                        if not line:
+                            continue
+                        decoded = line.strip()
+                        if decoded.startswith("data:"):
+                            payload = decoded[len("data:"):].strip()
+                            if payload == "[DONE]":
+                                break
+                            try:
+                                d = json.loads(payload)
+                                token = d.get("content") or d.get("answer") or d.get("token") or ""
+                            except Exception:
+                                token = payload
+                            # append token and display progressively
+                            full += token
+                            answer_box.markdown(f"**Assistant:** {full}")
+                    st.session_state.history.append({"user": question, "assistant": full, "ts": time.time()})
                 else:
                     st.error(f"Backend error: {resp.status_code} {resp.text}")
             except requests.exceptions.RequestException as e:
                 st.error(f"Connection error: {e}")
         else:
-            # stream via chat-stream
+            # stream via chat-stream endpoint
             try:
                 with st.spinner("Contacting model..."):
-                    # connect to SSE endpoint
                     url = f"{API_PREFIX}/chat-stream"
-                    # use requests streaming
-                    with requests.post(url, json={"question": question}, stream=True, timeout=2000) as r:
+                    with requests.post(url, json={"question": question}, stream=True, timeout=300) as r:
                         if r.status_code != 200:
                             st.error(f"Streaming endpoint returned {r.status_code}: {r.text}")
                         else:
@@ -66,12 +76,12 @@ with col1:
                                     continue
                                 decoded = line.strip()
                                 if decoded.startswith("data:"):
-                                    payload = decoded.replace("data:", "").strip()
+                                    payload = decoded[len("data:"):].strip()
                                     if payload == "[DONE]":
                                         break
                                     try:
                                         d = json.loads(payload)
-                                        token = d.get("token") or d.get("text") or ""
+                                        token = d.get("token") or d.get("content") or ""
                                     except Exception:
                                         token = payload
                                     full += token
@@ -88,10 +98,13 @@ with col2:
         files = {"file": (file_kb.name, file_kb.getvalue())}
         try:
             with st.spinner("Uploading to KB..."):
-                resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files, timeout=2000)
+                resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files, timeout=300)
             if resp.ok:
                 st.success("Uploaded to KB")
-                st.write(resp.json())
+                try:
+                    st.json(resp.json())
+                except Exception:
+                    st.write(resp.text)
             else:
                 try:
                     st.error(resp.json())
@@ -106,14 +119,11 @@ with col2:
         files = {"file": (img.name, img.getvalue())}
         try:
             with st.spinner("Extracting..."):
-                resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files, timeout=2000)
+                resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files, timeout=120)
             if resp.ok:
+                data = resp.json()
                 st.success("Extracted")
-                try:
-                    data = resp.json()
-                    st.text_area("OCR Result", data.get("answer", ""), height=250)
-                except Exception:
-                    st.text_area("OCR Result", resp.text, height=250)
+                st.text_area("OCR Result", data.get("answer", ""), height=250)
             else:
                 st.error(f"OCR endpoint error: {resp.status_code} {resp.text}")
         except requests.exceptions.RequestException as e:
@@ -125,10 +135,10 @@ with col2:
         files = {"file": (aud.name, aud.getvalue())}
         try:
             with st.spinner("Transcribing..."):
-                resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files, timeout=2000)
+                resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files, timeout=300)
             if resp.ok:
-                st.success("Transcribed")
                 data = resp.json()
+                st.success("Transcribed")
                 st.text_area("Transcript", data.get("answer", ""), height=250)
             else:
                 st.error(f"Transcribe error: {resp.status_code} {resp.text}")
