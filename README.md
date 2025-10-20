@@ -1,6 +1,6 @@
 # Multi-Modal RAG Q&A System
 
-A comprehensive Retrieval-Augmented Generation (RAG) system supporting text, images, audio, and URLs with advanced multimodal capabilities powered by Ollama's local LLMs.
+A comprehensive Retrieval-Augmented Generation (RAG) system supporting text, images, audio, and URLs with advanced multimodal capabilities powered by Ollama's (local) LLMs.
 
 ## 🚀 Features
 
