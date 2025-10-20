@@ -1,0 +1,79 @@
+2025-10-20 19:15:29,733 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 19:30:30,093 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 19:31:13,426 INFO:faiss.loader:Loading faiss with AVX2 support.
+2025-10-20 19:31:13,674 INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+2025-10-20 19:31:16,710 INFO:mm_rag:Loaded Whisper model: Whisper(
+  (encoder): AudioEncoder(
+    (conv1): Conv1d(80, 768, kernel_size=(3,), stride=(1,), padding=(1,))
+    (conv2): Conv1d(768, 768, kernel_size=(3,), stride=(2,), padding=(1,))
+    (blocks): ModuleList(
+      (0-11): 12 x ResidualAttentionBlock(
+        (attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (mlp): Sequential(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate='none')
+          (2): Linear(in_features=3072, out_features=768, bias=True)
+        )
+        (mlp_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (ln_post): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+  )
+  (decoder): TextDecoder(
+    (token_embedding): Embedding(51865, 768)
+    (blocks): ModuleList(
+      (0-11): 12 x ResidualAttentionBlock(
+        (attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (cross_attn): MultiHeadAttention(
+          (query): Linear(in_features=768, out_features=768, bias=True)
+          (key): Linear(in_features=768, out_features=768, bias=False)
+          (value): Linear(in_features=768, out_features=768, bias=True)
+          (out): Linear(in_features=768, out_features=768, bias=True)
+        )
+        (cross_attn_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        (mlp): Sequential(
+          (0): Linear(in_features=768, out_features=3072, bias=True)
+          (1): GELU(approximate='none')
+          (2): Linear(in_features=3072, out_features=768, bias=True)
+        )
+        (mlp_ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (ln): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+  )
+)
+2025-10-20 19:31:16,903 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 19:32:07,605 INFO:mm_rag:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 19:32:07,609 INFO:sentence_transformers.SentenceTransformer:Use pytorch device_name: cpu
+2025-10-20 19:32:07,609 INFO:sentence_transformers.SentenceTransformer:Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-10-20 19:32:16,841 INFO:mm_rag:Created a new FAISS index (IndexFlatL2) with dim=384
+2025-10-20 19:32:16,978 INFO:mm_rag:Saved chunk_store (3 chunks) to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\chunk_store.pkl
+2025-10-20 19:32:16,980 INFO:mm_rag:Saved FAISS index to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\embed_index.faiss
+2025-10-20 19:32:16,980 INFO:mm_rag:Added 3 chunks to index
+2025-10-20 19:32:16,981 INFO:mm_rag:Added 3 chunks to index for 1760648396870.pdf
+2025-10-20 19:32:53,446 INFO:mm_rag:Saved chunk_store (6 chunks) to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\chunk_store.pkl
+2025-10-20 19:32:53,447 INFO:mm_rag:Saved FAISS index to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\data\embeddings\embed_index.faiss
+2025-10-20 19:32:53,447 INFO:mm_rag:Added 3 chunks to index
+2025-10-20 19:32:53,447 INFO:mm_rag:Added 3 chunks to index for 1760648396870.pdf
+2025-10-20 20:00:46,386 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 20:00:54,446 INFO:faiss.loader:Loading faiss with AVX2 support.
+2025-10-20 20:00:54,467 INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+2025-10-20 20:22:59,723 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 20:23:05,367 INFO:faiss.loader:Loading faiss with AVX2 support.
+2025-10-20 20:23:05,383 INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+2025-10-20 20:23:33,377 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
+2025-10-20 20:23:39,387 INFO:faiss.loader:Loading faiss with AVX2 support.
+2025-10-20 20:23:39,402 INFO:faiss.loader:Successfully loaded faiss with AVX2 support.
+2025-10-20 20:23:39,524 INFO:mm_rag:Logger initialized, logs will be saved to C:\Users\Adars\Desktop\Multi-Modal-RAG-Q-A\backend\..\logs\app.log
