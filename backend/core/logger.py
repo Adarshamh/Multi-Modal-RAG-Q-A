@@ -1,19 +1,19 @@
 import logging
-import os
-from .config import BASE_DIR
-
-LOG_DIR = os.path.join(BASE_DIR, "..", "logs")
-os.makedirs(LOG_DIR, exist_ok=True)
-LOG_PATH = os.path.join(LOG_DIR, "app.log")
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s:%(name)s:%(message)s",
-    handlers=[
-        logging.FileHandler(LOG_PATH),
-        logging.StreamHandler()
-    ]
-)
+import sys
+from .config import LOG_FILE
 
 logger = logging.getLogger("mm_rag")
-logger.info("Logger initialized, logs will be saved to %s", LOG_PATH)
+logger.setLevel(logging.INFO)
+
+# Avoid duplicate handlers if imported multiple times
+if not logger.handlers:
+    fh = logging.FileHandler(LOG_FILE)
+    fh.setLevel(logging.INFO)
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)

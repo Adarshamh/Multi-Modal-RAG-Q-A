@@ -1,32 +1,23 @@
+"""
+High-level RAG API: add_document_to_index, retrieve
+Uses EmbeddingManager (dense + sparse hybrid) for retrieval.
+"""
 from .embedding_manager import get_manager
-from .config import CHUNK_SIZE, CHUNK_OVERLAP
 from .logger import logger
 
-def chunk_text(text, size=CHUNK_SIZE, overlap=CHUNK_OVERLAP):
-    text = text.replace("\r\n", "\n")
-    if len(text) <= size:
-        return [text]
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = start + size
-        chunk = text[start:end]
-        chunks.append(chunk)
-        # move with overlap
-        start = end - overlap if end - overlap > start else end
-        if start >= len(text):
-            break
-    return chunks
-
-def add_document_to_index(doc_name, text):
-    manager = get_manager()
-    chunks = chunk_text(text)
-    metadata = [{"source": doc_name, "chunk_idx": i} for i in range(len(chunks))]
-    added = manager.add_chunks(chunks, metadata)
-    logger.info("Added %d chunks to index for %s", added, doc_name)
+def add_document_to_index(name: str, text: str, meta: dict = None):
+    m = get_manager()
+    added = m.add_documents(name, text, meta=meta)
+    logger.info("Added %d chunks to index for %s", added, name)
     return added
 
-def retrieve(query, k=3):
-    manager = get_manager()
-    results = manager.search(query, k)
+def add_image_to_index(name: str, pil_image, meta: dict = None):
+    m = get_manager()
+    added = m.add_image(name, pil_image, meta=meta)
+    logger.info("Added image embedding for %s", name)
+    return added
+
+def retrieve(query: str, k: int = 3, alpha: float = 0.6):
+    m = get_manager()
+    results = m.hybrid_search(query, k=k, alpha=alpha)
     return results

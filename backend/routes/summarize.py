@@ -1,30 +1,30 @@
 from fastapi import APIRouter, Form
 from ..core.logger import logger
 from ..core.rag_engine import retrieve
-from ..core.config import OLLAMA_HOST, OLLAMA_PORT, OLLAMA_TEXT_MODEL
+from ..core.model_selector import select_model
+from ..core.config import OLLAMA_HOST, OLLAMA_PORT
 import requests
 
 router = APIRouter()
 
 @router.post("/auto-summarize")
-def auto_summarize(question: str = Form(...)):
+def summarize_text(query: str = Form(...), topk: int = 5):
     """
-    Very lightweight summarizer: fetch top chunks then ask LLM to summarize.
+    Simple summarization using retrieved context + Ollama.
     """
     try:
-        docs = retrieve(question or "summarize", k=5)
-        context = "\n\n".join([d.get("text","") for d in docs]) or ""
-        payload = {"model": OLLAMA_TEXT_MODEL, "messages": [{"role":"user", "content": f"Summarize the following:\n\n{context}"}]}
-        r = requests.post(f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat", json=payload, timeout=120)
+        docs = retrieve(query, k=topk)
+        context = "\n\n".join([d.get("text", "") for d in docs])
+        prompt = f"Summarize the following context:\n\n{context}\n\nSummary:"
+        model = select_model("text")
+        r = requests.post(f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat", json={"model": model, "messages":[{"role":"user","content":prompt}]}, timeout=60)
         if r.ok:
             try:
-                body = r.json()
-                ans = body.get("response") or body.get("text") or r.text
-            except Exception:
-                ans = r.text
-            return {"ok": True, "summary": ans}
+                return r.json()
+            except:
+                return {"answer": r.text}
         else:
-            return {"ok": False, "error": f"LLM error {r.status_code}"}
+            return {"error": r.text}
     except Exception as e:
-        logger.exception("auto-summarize error")
-        return {"ok": False, "error": str(e)}
+        logger.exception("summarize error")
+        return {"error": str(e)}

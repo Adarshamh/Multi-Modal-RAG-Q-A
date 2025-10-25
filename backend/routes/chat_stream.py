@@ -10,10 +10,8 @@ from ..core.model_selector import select_model
 
 router = APIRouter()
 
-
 class StreamQuery(BaseModel):
     question: str
-
 
 @router.post("/chat-stream")
 async def chat_stream(payload: StreamQuery):
@@ -24,7 +22,6 @@ async def chat_stream(payload: StreamQuery):
         prompt = payload.question
         model = select_model("text") or OLLAMA_TEXT_MODEL
         ollama_url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/chat"
-
         req_payload = {"model": model, "messages": [{"role": "user", "content": prompt}], "stream": True}
 
         with requests.post(ollama_url, json=req_payload, stream=True, timeout=300) as r:
@@ -34,7 +31,6 @@ async def chat_stream(payload: StreamQuery):
                 for raw in r.iter_lines():
                     if not raw:
                         continue
-
                     # Convert bytes to string safely
                     line = raw.decode("utf-8", errors="ignore") if isinstance(raw, bytes) else raw.strip()
                     if not line:

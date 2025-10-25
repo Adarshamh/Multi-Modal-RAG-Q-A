@@ -1,30 +1,31 @@
 import os
-from docx import Document
-import PyPDF2
-from .logger import logger
+from io import StringIO
+from ..core.logger import logger
+from PyPDF2 import PdfReader
+import docx
+import pandas as pd
 
-def extract_text_from_file(path: str) -> str:
+def extract_text_from_file(path):
     ext = os.path.splitext(path)[1].lower()
-    text = ""
     try:
         if ext == ".pdf":
-            with open(path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
-                pages = []
-                for p in reader.pages:
-                    try:
-                        pages.append(p.extract_text() or "")
-                    except Exception:
-                        pages.append("")
-                text = "\n".join(pages)
+            reader = PdfReader(path)
+            text = []
+            for p in reader.pages:
+                text.append(p.extract_text() or "")
+            return "\n".join(text)
         elif ext == ".docx":
-            doc = Document(path)
-            text = "\n".join([p.text for p in doc.paragraphs])
-        elif ext in [".txt", ".csv", ".md"]:
+            doc = docx.Document(path)
+            return "\n".join([p.text for p in doc.paragraphs])
+        elif ext in [".txt", ".md", ".py", ".js"]:
             with open(path, "r", encoding="utf-8", errors="ignore") as f:
-                text = f.read()
+                return f.read()
+        elif ext == ".csv":
+            df = pd.read_csv(path, encoding="utf-8", errors="ignore")
+            return df.to_csv(index=False)
         else:
-            logger.warning("Unsupported ext for text extraction: %s", ext)
+            logger.warning("Unsupported extract type: %s", ext)
+            return ""
     except Exception as e:
         logger.exception("Failed to extract text from %s", path)
-    return text
+        return ""

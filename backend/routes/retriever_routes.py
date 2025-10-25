@@ -1,14 +1,10 @@
-from fastapi import APIRouter
-from ..core.rag_engine import retrieve
-from ..core.logger import logger
+from fastapi import APIRouter, Form
+from ..core.embedding_manager import get_manager
 
 router = APIRouter()
 
-@router.get("/search")
-def search(q: str, k: int = 5):
-    try:
-        results = retrieve(q, k=k)
-        return {"ok": True, "results": results}
-    except Exception as e:
-        logger.exception("retriever search error")
-        return {"ok": False, "error": str(e)}
+@router.post("/search")
+def search(query: str = Form(...), k: int = Form(5)):
+    manager = get_manager()
+    results = manager.hybrid_search(query, k=k)
+    return {"results": results}
