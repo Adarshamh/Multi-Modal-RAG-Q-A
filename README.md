@@ -32,7 +32,7 @@ Multi-Modal-RAG-Q-A/
 │   │   ├── knowledge_base.py   # KB management
 │   │   ├── ocr_image.py        # Image OCR
 │   │   ├── summarize.py        # Text summarization
-│   │   ├── transcribe_audio.py # Audio processing       (Future Enhancement)
+│   │   ├── transcribe_audio.py # Audio processing
 │   │   ├── url_chat.py         # URL-based chat         (Future Enhancement)
 │   │   ├── retriever_routes.py # Document retrieval
 │   │   └── inference_routes.py # LLM inference
