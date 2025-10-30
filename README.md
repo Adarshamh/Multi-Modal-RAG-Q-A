@@ -18,32 +18,40 @@ A comprehensive Retrieval-Augmented Generation (RAG) system supporting text, ima
 
 ```
 Multi-Modal-RAG-Q-A/
-├── backend/              # FastAPI application
-│   ├── core/            # Core RAG functionality
-│   │   ├── config.py           # Configuration management
-│   │   ├── logger.py           # Logging utilities
-│   │   ├── embedding_manager.py # Vector embeddings
-│   │   ├── model_selector.py   # LLM model selection
-│   │   ├── rag_engine.py       # RAG pipeline
-│   │   └── text_extractor.py   # Document processing
-│   ├── routes/          # API endpoints
-│   │   ├── chat_stream.py      # Streaming chat
-│   │   ├── file_chat.py        # File-based chat
-│   │   ├── knowledge_base.py   # KB management
-│   │   ├── ocr_image.py        # Image OCR
-│   │   ├── summarize.py        # Text summarization
-│   │   ├── transcribe_audio.py # Audio processing
-│   │   ├── url_chat.py         # URL-based chat         (Future Enhancement)
-│   │   ├── retriever_routes.py # Document retrieval
-│   │   └── inference_routes.py # LLM inference
-│   ├── app.py           # FastAPI main application
-│   ├── requirements.txt # Python dependencies
-│   └── .env.example     # Environment variables template
-├── frontend/            # Streamlit UI
-│   ├── app_ui.py       # Main UI application
-│   └── requirements.txt # UI dependencies
-├── data/               # Document storage               (Auto generated file)
-└── logs/               # Application logs               (Auto generated file)
+├── backend/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── audi_transcriber.py
+│   │   ├── config.py
+│   │   ├── embedding_manager.py
+│   │   ├── logger.py
+│   │   ├── model_selector.py
+│   │   ├── ocr_extractor.py
+│   │   ├── rag_engine.py
+│   │   ├── text_extractor.py
+│   │
+│   └── routes/
+│       ├── __init__.py
+│       ├── chat_stream.py
+│       ├── file_chat.py
+│       ├── inference_routes.py
+│       ├── knowledge_base.py
+│       ├── ocr_image.py
+│       ├── retriever_routes.py
+│       ├── summarize.py
+│       ├── transcribe_audio.py
+│       ├── url_chat.py
+│
+├── frontend/
+│   ├── app_ui.py
+│   └── requirements.txt
+├── backend/requirements.txt
+├── backend/.env
+├── data/
+└── logs/
+
 ```
 
 ## 📋 Prerequisites
