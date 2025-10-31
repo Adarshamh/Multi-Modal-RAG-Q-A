@@ -101,8 +101,7 @@ ollama serve
 ### 3. Install Tesseract OCR
 
 **Windows:**
-1. Download installer from: https://github.com/UB-Mannheim/tesseract/wiki or
-2. https://tesseract-ocr.github.io/tessdoc/Compiling.html#windows
+1. Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
 3. Install to `C:\Program Files\Tesseract-OCR\`
 4. Add to system PATH
 
