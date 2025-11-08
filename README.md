@@ -49,8 +49,8 @@ Multi-Modal-RAG-Q-A/
 │   └── requirements.txt
 ├── backend/requirements.txt
 ├── backend/.env
-├── data/
-└── logs/
+├── data/           (auto generated file)
+└── logs/           (auto generated file)
 
 ```
 
