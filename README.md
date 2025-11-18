@@ -49,8 +49,8 @@ Multi-Modal-RAG-Q-A/
 │   └── requirements.txt
 ├── backend/requirements.txt
 ├── backend/.env
-├── data/
-└── logs/
+├── data/           (auto generated file)
+└── logs/           (auto generated file)
 
 ```
 
@@ -79,6 +79,8 @@ cd Multi-Modal-RAG-Q-A
 
 ### 2. Install Ollama
 
+Ollama is needed in AI development and especially local RAG pipelines because it enables developers and organizations to run state-of-the-art large language models (LLMs) like Llama 3 entirely on their own hardware, maintaining strict data privacy and control.
+
 **Windows/macOS:**
 ```bash
 # Download and install from https://ollama.ai/
@@ -99,6 +101,7 @@ ollama serve
 ```
 
 ### 3. Install Tesseract OCR
+Tesseract OCR is crucial in multimodal Retrieval Augmented Generation (RAG) systems because it enables the extraction of textual information from images, scanned documents, and figures—elements that standard text-based pipelines cannot directly process.
 
 **Windows:**
 1. Download installer from: https://github.com/UB-Mannheim/tesseract/wiki
@@ -106,6 +109,8 @@ ollama serve
 4. Add to system PATH
 
 ### 4. Install FFmpeg
+
+FFmpeg is essential in multimodal RAG (Retrieval Augmented Generation) systems, especially when working with audio and video, because it enables preprocessing, transcoding, and extraction of relevant media features before passing data into AI models and downstream pipelines.
 
 **Windows:**
 1. Download from: https://ffmpeg.org/download.html
