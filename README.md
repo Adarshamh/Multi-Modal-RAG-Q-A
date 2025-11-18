@@ -330,7 +330,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - **Ollama**: Local LLM inference engine
-- **LangChain**: RAG framework and document processing
 - **FastAPI**: High-performance web framework
 - **Streamlit**: Interactive UI framework
 - **Tesseract OCR**: Open-source OCR(Optical Character Recognition) engine
@@ -340,7 +339,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🎓 Learning Resources
 
 - [Ollama Documentation](https://github.com/ollama/ollama)
-- [LangChain Documentation](https://python.langchain.com/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Streamlit Documentation](https://docs.streamlit.io/)
 - [RAG Tutorial](https://www.pinecone.io/learn/retrieval-augmented-generation/)
