@@ -19,71 +19,121 @@ BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 API_PREFIX = f"{BACKEND_URL}/api"
 
 # -----------------------------
-# Custom CSS Styling
+# Typography & Styling
 # -----------------------------
 st.markdown("""
 <style>
-/* Remove Streamlit’s default wide padding */
-.block-container {
-    padding-top: 0.8rem !important;
-    padding-bottom: 0rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+* {
+    font-family: 'Inter', sans-serif;
 }
 
-/* Headings */
-h3, h4, h5, h6 {
-    margin-bottom: 0.4rem !important;
+.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 0 !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    background-color: #f9fafb;
+}
+
+/* Title and Caption */
+h1 {
+    color: #1e3a8a !important;
+    font-size: 2.4rem !important;
+    font-weight: 800 !important;
+    text-align: center;
+    letter-spacing: -0.5px;
+}
+.caption, .stCaption {
+    text-align: center !important;
+    font-size: 1.05rem !important;
+    color: #475569 !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Tabs */
+div[data-testid="stTabs"] button {
+    background-color: #eff6ff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    color: #1e40af !important;
+    font-size: 1rem !important;
+}
+div[data-testid="stTabs"] button[aria-selected="true"] {
+    background-color: #2563eb !important;
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+/* Section Titles */
+h2, h3, h4 {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+}
+h2 { font-size: 1.6rem !important; margin-bottom: 0.6rem; }
+h3 { font-size: 1.3rem !important; margin-bottom: 0.4rem; }
+
+/* Labels and Inputs */
+label, .stTextInput label, .stTextArea label {
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    color: #1e293b !important;
+}
+
+/* Text Areas */
+.stTextArea textarea {
+    min-height: 110px !important;
+    border-radius: 8px !important;
+    border: 1px solid #dbeafe !important;
+    background: #f8fafc !important;
+    font-size: 1rem !important;
+    padding: 0.6rem !important;
+    color: #111827 !important;
 }
 
 /* Buttons */
 div.stButton > button {
     background-color: #2563eb !important;
     color: white !important;
-    border-radius: 8px;
-    padding: 0.35rem 0.9rem;
-    font-weight: 500;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+    padding: 0.55rem 1.2rem !important;
+    font-size: 1rem !important;
     border: none;
+    transition: all 0.2s ease;
 }
 div.stButton > button:hover {
     background-color: #1d4ed8 !important;
-}
-
-/* Subheader and Labels */
-.stSubheader {
-    margin-bottom: 0.3rem !important;
-}
-.stTextArea textarea {
-    min-height: 100px !important;
-    border-radius: 6px !important;
-}
-
-/* Separator Line */
-hr, .stHorizontalBlock {
-    margin: 0.5rem 0 !important;
+    transform: scale(1.04);
 }
 
 /* Chat Bubbles */
 .user-bubble {
-    background: #0f172a;
+    background: #1e3a8a;
     color: #f8fafc;
-    padding: 10px 12px;
-    border-radius: 10px;
-    margin-bottom: 4px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    line-height: 1.45;
 }
 .assistant-bubble {
-    background: #1e293b;
-    color: #e2e8f0;
-    padding: 10px 12px;
-    border-radius: 10px;
-    margin-bottom: 6px;
+    background: #e2e8f0;
+    color: #1e293b;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    line-height: 1.45;
 }
 
-/* Sidebar cleanup */
-.css-1d391kg, .css-18e3th9, header, footer {
-    padding: 0 !important;
-    margin: 0 !important;
+/* Alerts */
+.stAlert > div {
+    font-size: 1rem !important;
 }
+
 header, footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
@@ -99,16 +149,19 @@ if "history" not in st.session_state:
 # -----------------------------
 # Header
 # -----------------------------
-st.title("🤖 Multi-Modal RAG Assistant")
+st.title("🤖 Multi-Modal RAG Q&A System")
 st.caption("Ask questions from your documents, images, or audio (Powered by Local Ollama)")
 
-col1, col2 = st.columns([2, 1])
+# -----------------------------
+# Tabs
+# -----------------------------
+tab1, tab2, tab3 = st.tabs(["💬 Chat Q&A", "🖼️ Image → Text (OCR)", "🎧 Audio → Text"])
 
 # -----------------------------
-# Left Section: Chat and KB Upload
+# TAB 1: Chat Q&A (Original Logic Unchanged)
 # -----------------------------
-with col1:
-    st.subheader("💬 Chat")
+with tab1:
+    st.subheader("💬 Chat with your Knowledge Base")
 
     kb_files = st.file_uploader(
         "Upload a document to KB (optional)",
@@ -116,7 +169,7 @@ with col1:
         key="kb_up"
     )
 
-    if kb_files and st.button("📤 Upload to KB"):
+    if kb_files and st.button("📤 Upload to KB", key="upload_kb"):
         files = {"file": (kb_files.name, kb_files.getvalue())}
         with st.spinner("Uploading to Knowledge Base..."):
             resp = requests.post(f"{API_PREFIX}/add-to-kb", files=files)
@@ -194,28 +247,42 @@ with col1:
                 except Exception as e:
                     st.error(f"⚠️ Connection error: {e}")
 
-# -----------------------------
-# Right Section: Tools (OCR + Audio)
-# -----------------------------
-with col2:
-    st.subheader("🧰 Tools")
+    st.markdown("---")
+    st.subheader("🕒 Conversation History")
 
-    st.markdown("#### 🖼 OCR (Image → Text)")
+    if st.session_state.history:
+        for m in reversed(st.session_state.history):
+            st.markdown(f"<div class='user-bubble'><b>You:</b> {m['user']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='assistant-bubble'><b>Assistant:</b> {m['assistant']}</div>", unsafe_allow_html=True)
+    else:
+        st.info("No conversations yet.")
+
+# -----------------------------
+# TAB 2: Image → Text (OCR)
+# -----------------------------
+with tab2:
+    st.subheader("🖼️ Extract Text from Image")
+
     img = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"], key="ocr")
-    if img and st.button("🔍 Extract Text"):
+    if img and st.button("🔍 Extract Text", key="ocr_btn"):
         files = {"file": (img.name, img.getvalue())}
         with st.spinner("Extracting text..."):
             resp = requests.post(f"{API_PREFIX}/extract-text-from-image", files=files)
         if resp.ok:
             data = resp.json()
-            st.success("✅ Extracted text successfully.")
+            st.success("✅ Text extracted successfully.")
             st.text_area("📄 OCR Result", data.get("answer", ""), height=180)
         else:
             st.error(f"OCR Error: {resp.status_code} {resp.text}")
 
-    st.markdown("#### 🎧 Audio → Text (Single)")
+# -----------------------------
+# TAB 3: Audio → Text
+# -----------------------------
+with tab3:
+    st.subheader("🎧 Audio Transcription")
+
     aud = st.file_uploader("Upload audio", type=["wav", "mp3", "m4a"], key="audio")
-    if aud and st.button("🎙 Transcribe Audio"):
+    if aud and st.button("🎙 Transcribe Audio", key="audio_btn"):
         files = {"file": (aud.name, aud.getvalue())}
         with st.spinner("Transcribing audio..."):
             resp = requests.post(f"{API_PREFIX}/transcribe-audio", files=files)
@@ -231,7 +298,7 @@ with col2:
     try:
         from streamlit_mic_recorder import audio_recorder
         rec = audio_recorder()
-        if rec and st.button("Send Recorded Clip"):
+        if rec and st.button("Send Recorded Clip", key="live_audio_btn"):
             b64 = base64.b64encode(rec).decode("utf-8")
             sess = st.session_state.session_id
             with st.spinner("Sending recorded audio..."):
@@ -244,16 +311,3 @@ with col2:
                 st.error(resp.text)
     except Exception:
         st.info("⚠️ Install `streamlit-mic-recorder` for live recording support.")
-
-# -----------------------------
-# Conversation History
-# -----------------------------
-st.markdown("---")
-st.subheader("🕒 Conversation History")
-
-if st.session_state.history:
-    for m in reversed(st.session_state.history):
-        st.markdown(f"<div class='user-bubble'><b>You:</b> {m['user']}</div>", unsafe_allow_html=True)
-        st.markdown(f"<div class='assistant-bubble'><b>Assistant:</b> {m['assistant']}</div>", unsafe_allow_html=True)
-else:
-    st.info("No conversations yet.")
