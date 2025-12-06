@@ -58,7 +58,7 @@ Multi-Modal-RAG-Q-A/
 
 ### System Requirements
 - **Python**: 3.11.9 or higher
-- **Operating System**: Windows, macOS, or Linux
+- **Operating System**: Windows
 - **RAM**: Minimum 8GB (16GB recommended for optimal performance)
 - **Disk Space**: At least 10GB for models and data
 
